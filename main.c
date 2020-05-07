@@ -9,11 +9,10 @@
 #include "hal_delay.h"
 #include "hal_uart.h"
 #include "user_config.h"
-
+xdata bool slp_flag;
+xdata bool wk_flag;
 void main()
 {	
-	int i=0,x=0;
-	
 	IO_Init();
 	hal_uart_init(UART_BAUD_9K6);  
 	hal_clk_set_16m_source(HAL_CLK_XOSC16M);   				/* Use external 16MHz crystal*/
@@ -24,22 +23,30 @@ void main()
 
 	printDetails();
 
-	sprintf(tx_payload, "L001R");
+	sprintf(tx_payload, "L002R");
 	RF_SendDat();
+
+	slp_flag = false;
+	wk_flag = false;
 
 	while(1)
 	{
-		D1 = 0;
-		sprintf(tx_payload, "L001A");
+		if(slp_flag==true)
+		{
+			sprintf(tx_payload,"L002S");
+			RF_SendDat();
+			nrf_sleep();
+		}
+		if(wk_flag==true){
+			sprintf(tx_payload,"L002W");
+			RF_SendDat();
+		}
+		sprintf(tx_payload, "L002A");
 		RF_SendDat();
+		D2=0;
 		delay_ms(500);
-		D1 = 1;
+		D2=1;
 		delay_ms(500);
-		
-		
-		
-		
-		
 	}                                           
 } 
 
@@ -70,3 +77,14 @@ void rf_irq() interrupt INTERRUPT_RFIRQ
 		RF_Recv_Flag = 1;  										/* Set Receive OK flag 				*/
    	}
 }															
+
+void wuop_irq() interrupt INTERRUPT_WUOPIRQ
+{
+	slp_flag = !slp_flag;
+	
+	if (!slp_flag) {
+		nrf_wakeup();
+		wk_flag=true;
+
+	}
+}

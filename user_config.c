@@ -19,20 +19,40 @@ xdata uint8_t  rx_payload[32];
 
 void IO_Init(void)
 {	
-	P0DIR = 0x90;		/* P0.7, P0.4 input; others output. (1001 0000) */
-	P1DIR = 0xFE;     	/* P1.2, P1.3 input for buttons 				*/
-	D1 = 1;             /* LED 1 Off 									*/
-	D2 = 1;	            /* LED 2 off 									*/
-	BZ = 0;				/* BUZZER off									*/
+	P0DIR	= 0x14; /*open uart*/
+	//P1DIR	= 0xFE;
+	//P0DIR  |= 0x01;  /*p0.0 input*/
+	//P0CON 	= 0xD0;
+	WUCON 	= 0xF3;
+	WUOPC0 	= 0x04;
+	WUOPC1 	= 0x00;
+	WUPIN 	= 0x01;		
+	OPMCON 	= 0x00;					
 }
 
-void nrf_register(void){
+uint8_t my_nrf_write_reg(uint8_t reg, uint8_t value)
+{
+  uint8_t retval;
+/*lint -esym(550,dummy) symbol not accessed*/
+/*lint -esym(438,dummy) last assigned value not used*/
+/*lint -esym(838,dummy) previously assigned value not used*/
+  uint8_t volatile dummy;
 
+  CSN_LOW();
 
+  HAL_NRF_HW_SPI_WRITE((W_REGISTER + reg));
+  while(HAL_NRF_HW_SPI_BUSY) {}
+  retval = HAL_NRF_HW_SPI_READ();
 
+  HAL_NRF_HW_SPI_WRITE(value);
+  while(HAL_NRF_HW_SPI_BUSY) {}
+  dummy = HAL_NRF_HW_SPI_READ();
 
+  CSN_HIGH();
 
+  return retval;
 }
+
 
 uint8_t my_nrf_read_reg(uint8_t reg)
 {
@@ -51,6 +71,16 @@ uint8_t my_nrf_read_reg(uint8_t reg)
   CSN_HIGH();
 
   return temp;
+}
+
+void nrf_sleep()
+{	
+	hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);	    					/* Power up 										*/
+
+}
+
+void nrf_wakeup(){
+	RfCofig();
 }
 
 void RfCofig(void)
@@ -84,6 +114,7 @@ void RfCofig(void)
 
 void RF_SendDat(void)
 {
+	
 	CE_LOW();
 	hal_nrf_set_operation_mode(HAL_NRF_PTX);   						/* Mode Tx 						*/
 	hal_nrf_write_tx_payload(tx_payload,TX_PAYLOAD_LEN); 

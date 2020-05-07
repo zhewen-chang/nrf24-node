@@ -10,6 +10,7 @@
 #define TX_PAYLOAD_LEN 	5  	/* Tx length     	*/
 #define RF_CHANNEL 		76 	/* RF channel    	*/
 #define RX_PAYLOAD_LEN 	2 	/* Rx length  	 	*/ 
+//#define PWRDWN 0xA4
 
 extern xdata bool  radio_busy;
 extern uint16_t PipeAndLen;
@@ -23,5 +24,7 @@ void RF_SendDat(void);
 void putstr(char *ch);
 int debugs(const char *fmt, ...);
 void printDetails(void);
+void nrf_sleep(void);
+void nrf_wakeup(void);
 
 #endif
