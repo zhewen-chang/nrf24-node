@@ -23,7 +23,7 @@ void main()
 
 	printDetails();
 
-	sprintf(tx_payload, "L001R");
+	sprintf(tx_payload, "L%sR",NODE_ID);
 	RF_SendDat();
 
 	slp_flag = false;
@@ -33,16 +33,16 @@ void main()
 	{
 		if(slp_flag==true)
 		{
-			sprintf(tx_payload,"L001S");
+			sprintf(tx_payload,"L%sS",NODE_ID);
 			RF_SendDat();
 			nrf_sleep();
 		}
 		if(wk_flag==true){
-			sprintf(tx_payload,"L001W");
+			sprintf(tx_payload,"L%sW",NODE_ID);
 			RF_SendDat();
 			wk_flag=false;
 		}
-		sprintf(tx_payload, "L001A");
+		sprintf(tx_payload, "L%sA",NODE_ID);
 		RF_SendDat();
 		D2=0;
 		delay_ms(500);

@@ -81,7 +81,7 @@ void nrf_wakeup()
 
 void RfCofig(void)
 {
-	uint8_t tx_addr[5]={0xB3, 0xB4, 0xB5, 0xB6, 0x32};
+	//uint8_t tx_addr[5]={0xB3, 0xB4, 0xB5, 0xB6, 0x32};
 
 	RFCKEN = 1;	     												/* Enable RF clock									*/
 
@@ -99,9 +99,9 @@ void RfCofig(void)
 	hal_nrf_enable_ack_payload(0);                                  /* open enable ack payload                          */
 	hal_nrf_enable_dynamic_payload(1);
 	hal_nrf_enable_continious_wave (0);
-	hal_nrf_set_address(HAL_NRF_PIPE0, "1pipe");                     /*set pipe0 address				  				  */  
+	hal_nrf_set_address(HAL_NRF_PIPE0, "3epip");                     /*set pipe0 address				  				  */  
 	//hal_nrf_set_address(HAL_NRF_PIPE1,"2Node");                     /*set pipe1 address								  */
-	hal_nrf_set_address(HAL_NRF_TX, "1pipe");                       /* set TX address									*/
+	hal_nrf_set_address(HAL_NRF_TX, "3epip");                       /* set TX address									*/
 
 
 	RF = 1;      													/* Enable RF interrupt 								*/

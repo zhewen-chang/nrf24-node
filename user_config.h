@@ -10,6 +10,8 @@
 #define TX_PAYLOAD_LEN 	5  	/* Tx length     	*/
 #define RF_CHANNEL 		76 	/* RF channel    	*/
 #define RX_PAYLOAD_LEN 	2 	/* Rx length  	 	*/ 
+
+#define NODE_ID "001"
 //#define PWRDWN 0xA4
 
 extern xdata bool  radio_busy;
