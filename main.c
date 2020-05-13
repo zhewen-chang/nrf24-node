@@ -23,7 +23,7 @@ void main()
 
 	printDetails();
 
-	sprintf(tx_payload, "L002R");
+	sprintf(tx_payload, "L001R");
 	RF_SendDat();
 
 	slp_flag = false;
@@ -33,15 +33,16 @@ void main()
 	{
 		if(slp_flag==true)
 		{
-			sprintf(tx_payload,"L002S");
+			sprintf(tx_payload,"L001S");
 			RF_SendDat();
 			nrf_sleep();
 		}
 		if(wk_flag==true){
-			sprintf(tx_payload,"L002W");
+			sprintf(tx_payload,"L001W");
 			RF_SendDat();
+			wk_flag=false;
 		}
-		sprintf(tx_payload, "L002A");
+		sprintf(tx_payload, "L001A");
 		RF_SendDat();
 		D2=0;
 		delay_ms(500);
@@ -81,7 +82,6 @@ void rf_irq() interrupt INTERRUPT_RFIRQ
 void wuop_irq() interrupt INTERRUPT_WUOPIRQ
 {
 	slp_flag = !slp_flag;
-	
 	if (!slp_flag) {
 		nrf_wakeup();
 		wk_flag=true;

@@ -19,15 +19,10 @@ xdata uint8_t  rx_payload[32];
 
 void IO_Init(void)
 {	
-	P0DIR	= 0x14; /*open uart*/
-	//P1DIR	= 0xFE;
-	//P0DIR  |= 0x01;  /*p0.0 input*/
-	//P0CON 	= 0xD0;
-	WUCON 	= 0xF3;
-	WUOPC0 	= 0x04;
-	WUOPC1 	= 0x00;
-	WUPIN 	= 0x01;		
-	OPMCON 	= 0x00;					
+	P0DIR	= 0x14;       /*open uart*/
+	WUCON 	= 0xF3;     //which interrupt to wakeup
+	WUOPC0 	= 0x04;     //which pin use to WU interrupt
+	WUPIN 	= 0x01;		//open WU interrupt				
 }
 
 uint8_t my_nrf_write_reg(uint8_t reg, uint8_t value)
@@ -75,37 +70,40 @@ uint8_t my_nrf_read_reg(uint8_t reg)
 
 void nrf_sleep()
 {	
-	hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);	    					/* Power up 										*/
+	hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);	 //RF power down   					/* Power up 										*/
 
 }
 
-void nrf_wakeup(){
+void nrf_wakeup()
+{
 	RfCofig();
 }
 
 void RfCofig(void)
 {
+	uint8_t tx_addr[5]={0xB3, 0xB4, 0xB5, 0xB6, 0x32};
+
 	RFCKEN = 1;	     												/* Enable RF clock									*/
 
 	hal_nrf_close_pipe(HAL_NRF_ALL);            					/* Close all chennel first 							*/
-	hal_nrf_open_pipe(HAL_NRF_ALL,true);	   						/* Open  a11 chennel							    */
+	hal_nrf_open_pipe(HAL_NRF_ALL,true);	   						/* Open all chennel							    	*/
 	hal_nrf_set_operation_mode(HAL_NRF_PTX);						/* Mode Rx 											*/
 	hal_nrf_set_rf_channel(RF_CHANNEL);		    		 			/* RF channel: 76, Tx and Rx must in same channel 	*/
-	hal_nrf_set_datarate(HAL_NRF_1MBPS);	  						/* RF Speed: 1MBPS 								*/
+	hal_nrf_set_datarate(HAL_NRF_1MBPS);	  						/* RF Speed: 1MBPS 									*/
 	hal_nrf_set_output_power(HAL_NRF_0DBM);	  						/* Power: 0DBM 										*/
 	hal_nrf_set_crc_mode(HAL_NRF_CRC_16BIT);       					/* CRC Mode: 16bit, must same as Tx					*/
 	hal_nrf_set_rx_payload_width(HAL_NRF_PIPE0, RX_PAYLOAD_LEN); 	/* Set Rx length 									*/
-	hal_nrf_set_rx_payload_width(HAL_NRF_PIPE1, RX_PAYLOAD_LEN); 	/* Set Rx length 									*/
+	//hal_nrf_set_rx_payload_width(HAL_NRF_PIPE1, RX_PAYLOAD_LEN); 	  /* Set Rx length 									  */
 	hal_nrf_set_power_mode(HAL_NRF_PWR_UP);	    					/* Power up 										*/
-	hal_nrf_setup_dynamic_payload(63);                             	/*DYNP=0x3f                                          */
-	hal_nrf_enable_ack_payload(1);                                  /*open enable ack payload                            */
+	hal_nrf_setup_dynamic_payload(63);                             	/* DYNP=0x3f                                        */
+	hal_nrf_enable_ack_payload(0);                                  /* open enable ack payload                          */
 	hal_nrf_enable_dynamic_payload(1);
 	hal_nrf_enable_continious_wave (0);
-	hal_nrf_set_address(HAL_NRF_PIPE0,"1Node");                     /*set pipe0 address*/  
-	hal_nrf_set_address(HAL_NRF_PIPE1,"2Node");                     /*set pipe1 address*/
-	hal_nrf_set_address(HAL_NRF_TX, "gaway");                       /*set TX address*/
-	
-	
+	hal_nrf_set_address(HAL_NRF_PIPE0, "1pipe");                     /*set pipe0 address				  				  */  
+	//hal_nrf_set_address(HAL_NRF_PIPE1,"2Node");                     /*set pipe1 address								  */
+	hal_nrf_set_address(HAL_NRF_TX, "1pipe");                       /* set TX address									*/
+
+
 	RF = 1;      													/* Enable RF interrupt 								*/
 	EA = 1;	     													/* Enable all interrupts 							*/
 	
@@ -190,15 +188,31 @@ typedef union {
 	} bits;
 } status_t;
 
+typedef union {
+  uint8_t value;
+  struct {
+    uint8_t pipe_0 : 1;
+    uint8_t pipe_1 : 1;
+    uint8_t pipe_2 : 1;
+    uint8_t pipe_3 : 1;
+    uint8_t pipe_4 : 1;
+    uint8_t pipe_5 : 1;
+    const uint8_t : 2;
+  } bits;
+} en_pipes_t;
+
 void printDetails(void){
 	rf_setup_t setup;
 	config_t config;
 	status_t status;
+	en_pipes_t pipe;
 	uint8_t p0[5], p1[5], p2, p3, p4, p5, tx[5];
 	
 	setup.value=my_nrf_read_reg (RF_SETUP);
 	config.value=my_nrf_read_reg (CONFIG);
 	status.value=my_nrf_read_reg(STATUS);
+	pipe.value=my_nrf_read_reg(EN_RXADDR);
+
 
 
 	debugs("\r\n================ NRF Configuration ================\r\n");
@@ -270,7 +284,24 @@ void printDetails(void){
 	{
 		debugs("PA Power\t\t= PA_MAX\r\n");
 	}
-
+	debugs("Pipe\t\t=");
+	if(pipe.value==63)
+		debugs("ALL \r\n");
+	else {
+		if(pipe.bits.pipe_0)
+			debugs("0 ");
+		if(pipe.bits.pipe_1)
+			debugs("1 ");
+		if(pipe.bits.pipe_2)
+			debugs("2 ");
+		if(pipe.bits.pipe_3)
+			debugs("3 ");
+		if(pipe.bits.pipe_4)
+			debugs("4 ");
+		if(pipe.bits.pipe_5)
+			debugs("5 ");
+		debugs("\r\n");
+	}
 	
 
 }
