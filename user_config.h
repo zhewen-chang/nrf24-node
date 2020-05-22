@@ -31,7 +31,7 @@ void IO_Init(void);
 void RF_SendDat(void);
 void putstr(char *ch);
 int32_t debugs(const char *fmt, ...);
-void printDetails(void);
+void print_details(void);
 void nrf_sleep(void);
 void nrf_wakeup(void);
 

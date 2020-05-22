@@ -15,7 +15,7 @@ void main()
 	hal_nrf_set_address(HAL_NRF_PIPE0, PIPE_NO);                    /* set pipe0 address				  				  */  
 	hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
 
-	printDetails();
+	print_details();
 
 	sprintf(tx_payload, "L%sR",NODE_ID);
 	RF_SendDat();
