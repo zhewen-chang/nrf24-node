@@ -1,16 +1,8 @@
-#include <reg24le1.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include "hal_nrf.h"
-#include "hal_nrf_hw.h"
-#include "hal_clk.h"
-#include "hal_delay.h"
-#include "hal_uart.h"
-#include "user_config.h"
+#include "main.h"
+
 xdata bool slp_flag;
 xdata bool wk_flag;
+
 void main()
 {	
 	IO_Init();
@@ -20,6 +12,8 @@ void main()
 	while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M);
 	
 	RfCofig();
+	hal_nrf_set_address(HAL_NRF_PIPE0, PIPE_NO);                    /* set pipe0 address				  				  */  
+	hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
 
 	printDetails();
 
@@ -38,6 +32,8 @@ void main()
 			nrf_sleep();
 		}
 		if(wk_flag==true){
+			hal_nrf_set_address(HAL_NRF_PIPE0, PIPE_NO);                    /* set pipe0 address				  				  */  
+			hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
 			sprintf(tx_payload,"L%sW",NODE_ID);
 			RF_SendDat();
 			wk_flag=false;
@@ -82,9 +78,9 @@ void rf_irq() interrupt INTERRUPT_RFIRQ
 void wuop_irq() interrupt INTERRUPT_WUOPIRQ
 {
 	slp_flag = !slp_flag;
+
 	if (!slp_flag) {
 		nrf_wakeup();
 		wk_flag=true;
-
 	}
 }

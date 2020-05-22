@@ -27,62 +27,60 @@ void IO_Init(void)
 
 uint8_t my_nrf_write_reg(uint8_t reg, uint8_t value)
 {
-  uint8_t retval;
-/*lint -esym(550,dummy) symbol not accessed*/
-/*lint -esym(438,dummy) last assigned value not used*/
-/*lint -esym(838,dummy) previously assigned value not used*/
-  uint8_t volatile dummy;
+	uint8_t retval;
+	/*lint -esym(550,dummy) symbol not accessed*/
+	/*lint -esym(438,dummy) last assigned value not used*/
+	/*lint -esym(838,dummy) previously assigned value not used*/
+	uint8_t volatile dummy;
 
-  CSN_LOW();
+	CSN_LOW();
 
-  HAL_NRF_HW_SPI_WRITE((W_REGISTER + reg));
-  while(HAL_NRF_HW_SPI_BUSY) {}
-  retval = HAL_NRF_HW_SPI_READ();
+	HAL_NRF_HW_SPI_WRITE((W_REGISTER + reg));
+	while(HAL_NRF_HW_SPI_BUSY) {}
+	retval = HAL_NRF_HW_SPI_READ();
 
-  HAL_NRF_HW_SPI_WRITE(value);
-  while(HAL_NRF_HW_SPI_BUSY) {}
-  dummy = HAL_NRF_HW_SPI_READ();
+	HAL_NRF_HW_SPI_WRITE(value);
+	while(HAL_NRF_HW_SPI_BUSY) {}
+	dummy = HAL_NRF_HW_SPI_READ();
 
-  CSN_HIGH();
+	CSN_HIGH();
 
-  return retval;
+	return retval;
 }
 
 
 uint8_t my_nrf_read_reg(uint8_t reg)
 {
-  uint8_t temp;
+	uint8_t temp;
 
-  CSN_LOW();
+	CSN_LOW();
 
-  HAL_NRF_HW_SPI_WRITE(reg);
-  while(HAL_NRF_HW_SPI_BUSY) {}
-  temp = HAL_NRF_HW_SPI_READ();
+	HAL_NRF_HW_SPI_WRITE(reg);
+	while(HAL_NRF_HW_SPI_BUSY) {}
+	temp = HAL_NRF_HW_SPI_READ();
 
-  HAL_NRF_HW_SPI_WRITE(0U);
-  while(HAL_NRF_HW_SPI_BUSY) {}
-  temp = HAL_NRF_HW_SPI_READ();
+	HAL_NRF_HW_SPI_WRITE(0U);
+	while(HAL_NRF_HW_SPI_BUSY) {}
+	temp = HAL_NRF_HW_SPI_READ();
 
-  CSN_HIGH();
+	CSN_HIGH();
 
-  return temp;
+	return temp;
 }
 
-void nrf_sleep()
+void nrf_sleep(void)
 {	
-	hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);	 //RF power down   					/* Power up 										*/
+	hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);	 					/* RF power down   									*/			
 
 }
 
-void nrf_wakeup()
+void nrf_wakeup(void)
 {
 	RfCofig();
 }
 
 void RfCofig(void)
 {
-	//uint8_t tx_addr[5]={0xB3, 0xB4, 0xB5, 0xB6, 0x32};
-
 	RFCKEN = 1;	     												/* Enable RF clock									*/
 
 	hal_nrf_close_pipe(HAL_NRF_ALL);            					/* Close all chennel first 							*/
@@ -93,16 +91,11 @@ void RfCofig(void)
 	hal_nrf_set_output_power(HAL_NRF_0DBM);	  						/* Power: 0DBM 										*/
 	hal_nrf_set_crc_mode(HAL_NRF_CRC_16BIT);       					/* CRC Mode: 16bit, must same as Tx					*/
 	hal_nrf_set_rx_payload_width(HAL_NRF_PIPE0, RX_PAYLOAD_LEN); 	/* Set Rx length 									*/
-	//hal_nrf_set_rx_payload_width(HAL_NRF_PIPE1, RX_PAYLOAD_LEN); 	  /* Set Rx length 									  */
 	hal_nrf_set_power_mode(HAL_NRF_PWR_UP);	    					/* Power up 										*/
 	hal_nrf_setup_dynamic_payload(63);                             	/* DYNP=0x3f                                        */
 	hal_nrf_enable_ack_payload(0);                                  /* open enable ack payload                          */
 	hal_nrf_enable_dynamic_payload(1);
 	hal_nrf_enable_continious_wave (0);
-	hal_nrf_set_address(HAL_NRF_PIPE0, "3epip");                     /*set pipe0 address				  				  */  
-	//hal_nrf_set_address(HAL_NRF_PIPE1,"2Node");                     /*set pipe1 address								  */
-	hal_nrf_set_address(HAL_NRF_TX, "3epip");                       /* set TX address									*/
-
 
 	RF = 1;      													/* Enable RF interrupt 								*/
 	EA = 1;	     													/* Enable all interrupts 							*/
@@ -124,7 +117,6 @@ void RF_SendDat(void)
 
 	hal_nrf_set_operation_mode(HAL_NRF_PRX);   						/* Mode: Tx 					*/
 	CE_HIGH();
-	//debugs("CONFIG\t\t= 0x%b02x\r\n",my_nrf_read_reg (CONFIG));
 }
 
 void putstr(char *ch)
@@ -134,9 +126,9 @@ void putstr(char *ch)
 	}
 }
 
-int debugs(const char *fmt, ...)
+int32_t debugs(const char *fmt, ...)
 {
-	int printed;
+	int32_t printed;
 	char printf_buf[300];
 	va_list args;
 
@@ -149,159 +141,116 @@ int debugs(const char *fmt, ...)
 	return printed;
 }
 
-typedef union {
-  uint8_t value;
-	struct {
-		const uint8_t : 1;
-		uint8_t rf_pwr : 2;
-		uint8_t rf_dr_high : 1;
-		uint8_t pll_lock : 1;
-		uint8_t rf_dr_low : 1;
-    const uint8_t : 1;
-    uint8_t cont_wave : 1;
-	} bits;
-} rf_setup_t;
+hal_nrf_datarate_t hal_nrf_get_datarate(void) 
+{
+	hal_nrf_datarate_t result;
+	uint8_t rf_setup = my_nrf_read_reg(RF_SETUP) & (_BV(RF_DR_LOW) | _BV(RF_DR_HIGH));
 
-typedef union {
-  uint8_t value;
-	struct {
-		uint8_t prim_rx : 1;
-		uint8_t pwr_up : 1;
-		uint8_t crc0 : 1;
-		uint8_t en_crc : 1;
-		uint8_t mask_max_rt : 1;
-		uint8_t mask_tx_ds : 1;
-		uint8_t mask_rx_dr : 1;
-		const uint8_t : 1;
-	} bits;
-} config_t;
+    if (rf_setup == _BV(RF_DR_LOW)) {
+        // '10' = 250KBPS
+        result = HAL_NRF_250KBPS;
+    } else if (rf_setup == _BV(RF_DR_HIGH)) {
+        // '01' = 2MBPS
+        result = HAL_NRF_2MBPS;
+    } else {
+        // '00' = 1MBPS
+        result = HAL_NRF_1MBPS;
+    }
+    return result;
+}
 
-typedef union {
-  uint8_t value;
-	struct {
-		uint8_t tx_full : 1;
-		uint8_t rx_p_no : 3;
-		uint8_t max_rt : 1;
-		uint8_t tx_ds : 1;
-		uint8_t rx_dr : 1;
-		const uint8_t : 1;
-	} bits;
-} status_t;
+uint8_t hal_nrf_get_pa_power(void)
+{
+	return (my_nrf_read_reg(RF_SETUP) & (_BV(RF_PWR_LOW) | _BV(RF_PWR_HIGH))) >> 1;
+}
 
-typedef union {
-  uint8_t value;
-  struct {
-    uint8_t pipe_0 : 1;
-    uint8_t pipe_1 : 1;
-    uint8_t pipe_2 : 1;
-    uint8_t pipe_3 : 1;
-    uint8_t pipe_4 : 1;
-    uint8_t pipe_5 : 1;
-    const uint8_t : 2;
-  } bits;
-} en_pipes_t;
+hal_nrf_crc_mode_t hal_nrf_get_crc_length(void)
+{
+	hal_nrf_crc_mode_t result;
+	uint8_t config = my_nrf_read_reg(CONFIG) & (_BV(CRCO) | _BV(EN_CRC));
 
-void printDetails(void){
-	rf_setup_t setup;
-	config_t config;
-	status_t status;
-	en_pipes_t pipe;
-	uint8_t p0[5], p1[5], p2, p3, p4, p5, tx[5];
-	
-	setup.value=my_nrf_read_reg (RF_SETUP);
-	config.value=my_nrf_read_reg (CONFIG);
-	status.value=my_nrf_read_reg(STATUS);
-	pipe.value=my_nrf_read_reg(EN_RXADDR);
+	if (config == _BV(CRCO)) {
+        // '10' = 8BIT
+        result = HAL_NRF_CRC_8BIT;
+    } else if (config == (_BV(CRCO) | _BV(EN_CRC))) {
+        // '11' = 16BIT
+        result = HAL_NRF_CRC_16BIT;
+    } else {
+        // '00' = OFF
+        result = HAL_NRF_CRC_OFF;
+    }
+	return result;
+}
 
+static void print_status(void)
+{
+	uint8_t status = my_nrf_read_reg(STATUS);
 
+	debugs("%-15s=", "STATUS");
+	debugs(" 0x%b02x", status);
+	debugs(" RX_DR=%bu", (status & _BV(RX_DR)) ? 1 : 0);
+	debugs(" TX_DS=%bu", (status & _BV(TX_DS)) ? 1 : 0);
+	debugs(" MAX_RT=%bu", (status & _BV(MAX_RT)) ? 1 : 0);
+	debugs(" RX_P_NO=%bu", (status >> RX_P_NO) & 0x07);
+	debugs(" TX_FULL=%bu", (status & _BV(TX_FULL)) ? 1 : 0);
+	debugs("\r\n");
+}
+
+static void print_byte_register(const char *name, uint8_t reg, uint8_t counts)
+{
+	uint8_t i;
+
+	debugs("%-15s= ", name);
+	for (i=0; i<counts; i++) {
+		debugs("0x%b02x ", my_nrf_read_reg(reg + i));
+	}
+	debugs("\r\n");
+}
+
+static void print_address_register(const char *name, uint8_t reg, uint8_t counts)
+{
+	uint8_t buf[5], *bufptr;
+
+	debugs("%-15s=", name);
+	while (counts--) {
+		debugs(" 0x");
+		hal_nrf_get_address(reg++, buf);
+
+		bufptr = buf + 5;
+		while (--bufptr >= buf) {
+			debugs("%b02x", *bufptr);
+		}
+	}
+	debugs("\r\n");
+}
+
+void printDetails(void)
+{
+	uint8_t setup  = my_nrf_read_reg(RF_SETUP);
+	uint8_t config = my_nrf_read_reg(CONFIG);
+
+	const char data_rate[][8] = {"1Mbps", "2Mbps", "250Kbps", "ERROR"};
+	const char crc_len[][8] = {"OFF", "8BIT", "16BIT"};
+	const char pa_power[][8] = {"PA_OFF", "PA_LOW", "PA_HIGH", "PA_MAX"};
 
 	debugs("\r\n================ NRF Configuration ================\r\n");
-	debugs("STATUS\t\t= 0x%b02x RX_DR=%bu TX_DS=%bu MAX_RT=%bu RX_P_NO=%bu TX_FULL=%bu\r\n",status.value,status.bits.rx_dr,status.bits.tx_ds,status.bits.max_rt,status.bits.rx_p_no,status.bits.tx_full);
-	hal_nrf_get_address(HAL_NRF_PIPE0, p0);
-	hal_nrf_get_address(HAL_NRF_PIPE1, p1);
-    debugs("RX_ADDR_P0-1\t= 0x%b02x%b02x%b02x%b02x%b02x 0x%b02x%b02x%b02x%b02x%b02x\r\n", p1[4], p1[3], p1[2], p1[1], p1[0], p0[4], p0[3], p0[2], p0[1], p0[0]);
-	
-	hal_nrf_get_address(HAL_NRF_PIPE2, &p2);
-	hal_nrf_get_address(HAL_NRF_PIPE3, &p3);
-	hal_nrf_get_address(HAL_NRF_PIPE4, &p4);
-	hal_nrf_get_address(HAL_NRF_PIPE5, &p5);
-    debugs("RX_ADDR_P2-5\t= 0x%b02x 0x%b02x 0x%b02x 0x%b02x\r\n", my_nrf_read_reg(RX_ADDR_P2), p3, p4, p5);
+	print_status();
 
-	hal_nrf_get_address(HAL_NRF_TX, tx);
-    debugs("TX_ADDR\t\t= 0x%b02x%b02x%b02x%b02x%b02x\r\n", tx[4], tx[3], tx[2], tx[1], tx[0]);
-	debugs("RX_PW_P0-P5\t\t= 0x%b02x 0x%b02x 0x%b02x 0x%b02x 0x%b02x 0x%b02x\r\n",my_nrf_read_reg(RX_PW_P0),my_nrf_read_reg(RX_PW_P1),my_nrf_read_reg(RX_PW_P2),my_nrf_read_reg(RX_PW_P3),my_nrf_read_reg(RX_PW_P4),my_nrf_read_reg(RX_PW_P5));
-	debugs("EN_AA\t\t\t= 0x%b02x\r\n", my_nrf_read_reg(EN_AA));
-	debugs("EN_RXADDR\t\t= 0x%b02x\r\n",my_nrf_read_reg (EN_RXADDR));
-	debugs("RF_CH\t\t\t= 0x%b02x\r\n", my_nrf_read_reg (RF_CH));
-	debugs("RF_SETUP\t\t= 0x%b02x\r\n",my_nrf_read_reg (RF_SETUP));
-	debugs("CONFIG\t\t= 0x%b02x\r\n",my_nrf_read_reg (CONFIG));
-	debugs("DYNPD/FEATURE\t= 0x%b02x 0x%b02x\r\n",my_nrf_read_reg (DYNPD),my_nrf_read_reg(FEATURE));
-	if((setup.bits.rf_dr_high|setup.bits.rf_dr_low<<1)==0)
-	{
-		debugs("DATA RATE\t\t= 1Mbps\r\n");
-	}
-	else if((setup.bits.rf_dr_high|setup.bits.rf_dr_low<<1)==1)
-	{
-		debugs("DATA RATE\t\t= 2Mbps\r\n");
-	}
-	else if((setup.bits.rf_dr_high|setup.bits.rf_dr_low<<1)==2)
-	{
-		debugs("DATA RATE\t\t= 250kbps\r\n");
-	}
-	else
-	{
-		debugs("DATA RATE\t\t= It's BUGS\r\n");
-	}
+	print_address_register("RX_ADDR_P0-1", HAL_NRF_PIPE0, 2);
+	print_byte_register("RX_ADDR_P2-5", RX_ADDR_P2, 4);
+	print_address_register("TX_ADDR", HAL_NRF_TX, 1);
 
-	debugs("Model\t\t\t= nRF24LE1\r\n");
-	
-	if((config.bits.en_crc)==0)
-	{
-		debugs("CRC LENGTH\t\t= OFF\r\n");
-	}
-	else if((config.bits.crc0<<1|config.bits.en_crc)==1)
-	{
-		debugs("CRC LENGTH\t\t= 8BIT\r\n");
-	}
-	else if((config.bits.crc0<<1|config.bits.en_crc)==3)
-	{
-		debugs("CRC LENGTH\t\t= 16BIT\r\n");
-	}
+	print_byte_register("RX_PW_P0-P5", RX_PW_P0, 6);
+	print_byte_register("EN_AA", EN_AA, 1);
+	print_byte_register("EN_RXADDR", EN_RXADDR, 1);
+	print_byte_register("RF_CH", RF_CH, 1);
+	print_byte_register("RF_SETUP", RF_SETUP, 1);
+	print_byte_register("CONFIG", CONFIG, 1);
+	print_byte_register("RF_CH", RF_CH, 1);
+	print_byte_register("DYNPD/FEATURE", DYNPD, 2);
 
-	if((setup.bits.rf_pwr)==0)
-	{
-		debugs("PA Power\t\t= PA_OFF\r\n");
-	}
-	else if((setup.bits.rf_pwr)==1)
-	{
-		debugs("PA Power\t\t= PA_LOW\r\n");
-	}
-	else if((setup.bits.rf_pwr)==2)
-	{
-		debugs("PA Power\t\t= PA_HIGH\r\n");
-	}
-	else
-	{
-		debugs("PA Power\t\t= PA_MAX\r\n");
-	}
-	debugs("Pipe\t\t=");
-	if(pipe.value==63)
-		debugs("ALL \r\n");
-	else {
-		if(pipe.bits.pipe_0)
-			debugs("0 ");
-		if(pipe.bits.pipe_1)
-			debugs("1 ");
-		if(pipe.bits.pipe_2)
-			debugs("2 ");
-		if(pipe.bits.pipe_3)
-			debugs("3 ");
-		if(pipe.bits.pipe_4)
-			debugs("4 ");
-		if(pipe.bits.pipe_5)
-			debugs("5 ");
-		debugs("\r\n");
-	}
-	
-
+	debugs("%-15s= %s\r\n", "Data Rate", data_rate[hal_nrf_get_datarate()]);
+	debugs("%-15s= nRF24LE1\r\n", "Model");
+	debugs("%-15s= %s\r\n", "CRC Length", crc_len[hal_nrf_get_crc_length()]);
+	debugs("%-15s= %s\r\n", "PA Power",  pa_power[hal_nrf_get_pa_power()]);
 }
