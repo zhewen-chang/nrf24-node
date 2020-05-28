@@ -2,6 +2,7 @@
 
 xdata bool slp_flag;
 xdata bool wk_flag;
+char nodeid[5];
 
 void main()
 {	
@@ -12,13 +13,21 @@ void main()
 	while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M);
 	
 	RfCofig();
-	hal_nrf_set_address(HAL_NRF_PIPE0, PIPE_NO);                    /* set pipe0 address				  				  */  
+	hal_nrf_set_address(HAL_NRF_PIPE0, "gaway");                    /* set pipe0 address				  				  */  
 	hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
 
 	print_details();
 
-	sprintf(tx_payload, "L%sR",NODE_ID);
+	tx_payload[0] = 'R';
+	tx_payload[1] = 'G';
+	tx_payload[2] = 'S';
+	tx_payload[3] = 0;
 	RF_SendDat();
+
+	while (RF_Recv_Flag != 1);
+	RF_Recv_Flag = 0;
+	strcpy(nodeid,rx_payload);
+
 
 	slp_flag = false;
 	wk_flag = false;
@@ -27,18 +36,18 @@ void main()
 	{
 		if(slp_flag==true)
 		{
-			sprintf(tx_payload,"L%sS",NODE_ID);
+			sprintf(tx_payload,"L%sS",nodeid);
 			RF_SendDat();
 			nrf_sleep();
 		}
 		if(wk_flag==true){
 			hal_nrf_set_address(HAL_NRF_PIPE0, PIPE_NO);                    /* set pipe0 address				  				  */  
 			hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
-			sprintf(tx_payload,"L%sW",NODE_ID);
+			sprintf(tx_payload,"L%sW",nodeid);
 			RF_SendDat();
 			wk_flag=false;
 		}
-		sprintf(tx_payload, "L%sA",NODE_ID);
+		sprintf(tx_payload, "L%sA",nodeid);
 		RF_SendDat();
 		D2=0;
 		delay_ms(500);
