@@ -9,7 +9,7 @@
 
 #define TX_PAYLOAD_LEN 	5  					/* Tx length     	*/
 #define RF_CHANNEL 		76 					/* RF channel    	*/
-#define RX_PAYLOAD_LEN 	2 					/* Rx length  	 	*/ 
+#define RX_PAYLOAD_LEN 	5 					/* Rx length  	 	*/ 
 
 /* extend for hal */
 #define _BV(bit) 		(1 << (bit))

@@ -19,9 +19,9 @@ xdata uint8_t  rx_payload[32];
 
 void IO_Init(void)
 {	
-	P0DIR	= 0x14;       /*open uart*/
+	P0DIR	= 0x15;       /*open uart*/
 	WUCON 	= 0xF3;     //which interrupt to wakeup
-	WUOPC0 	= 0x04;     //which pin use to WU interrupt
+	WUOPC0 	= 0x01;     //which pin use to WU interrupt
 	WUPIN 	= 0x01;		//open WU interrupt				
 }
 
@@ -83,7 +83,7 @@ void RfCofig(void)
 	RFCKEN = 1;	     												/* Enable RF clock									*/
 
 	hal_nrf_close_pipe(HAL_NRF_ALL);            					/* Close all chennel first 							*/
-	hal_nrf_open_pipe(HAL_NRF_ALL,true);	   						/* Open all chennel							    	*/
+	hal_nrf_open_pipe(HAL_NRF_PIPE0,true);	   						/* Open all chennel							    	*/
 	hal_nrf_set_operation_mode(HAL_NRF_PTX);						/* Mode Rx 											*/
 	hal_nrf_set_rf_channel(RF_CHANNEL);		    		 			/* RF channel: 76, Tx and Rx must in same channel 	*/
 	hal_nrf_set_datarate(HAL_NRF_1MBPS);	  						/* RF Speed: 1MBPS 									*/

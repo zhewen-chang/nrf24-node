@@ -3,6 +3,8 @@
 xdata bool slp_flag;
 xdata bool wk_flag;
 char nodeid[5];
+char nodepipe[5];
+char pipe_no[6]="0pipe";
 
 void main()
 {	
@@ -14,7 +16,7 @@ void main()
 	
 	RfCofig();
 	hal_nrf_set_address(HAL_NRF_PIPE0, "gaway");                    /* set pipe0 address				  				  */  
-	hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
+	hal_nrf_set_address(HAL_NRF_TX, pipe_no);                       /* set TX address									*/
 
 	print_details();
 
@@ -26,8 +28,14 @@ void main()
 
 	while (RF_Recv_Flag != 1);
 	RF_Recv_Flag = 0;
-	strcpy(nodeid,rx_payload);
+	strncpy(nodeid,rx_payload,3);
+	strncpy(nodepipe,rx_payload+4,1);
+	nodeid[3]='\0';
+	nodepipe[1]='\0';
+	sprintf(pipe_no,"%spipe",nodepipe);
 
+	hal_nrf_set_address(HAL_NRF_TX, pipe_no);                       /* set TX address									*/
+	debugs("%s\r\n",rx_payload);
 
 	slp_flag = false;
 	wk_flag = false;
@@ -41,8 +49,8 @@ void main()
 			nrf_sleep();
 		}
 		if(wk_flag==true){
-			hal_nrf_set_address(HAL_NRF_PIPE0, PIPE_NO);                    /* set pipe0 address				  				  */  
-			hal_nrf_set_address(HAL_NRF_TX, PIPE_NO);                       /* set TX address									*/
+			hal_nrf_set_address(HAL_NRF_PIPE0, pipe_no);                    /* set pipe0 address				  				  */  
+			hal_nrf_set_address(HAL_NRF_TX, pipe_no);                       /* set TX address									*/
 			sprintf(tx_payload,"L%sW",nodeid);
 			RF_SendDat();
 			wk_flag=false;
