@@ -28,7 +28,7 @@ extern xdata uint8_t  rx_payload[32];
 
 void RfCofig(void);
 void IO_Init(void);
-void RF_SendDat(void);
+void RF_SendData(void);
 void putstr(char *ch);
 int32_t debugs(const char *fmt, ...);
 void print_details(void);

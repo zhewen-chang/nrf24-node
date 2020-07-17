@@ -2,7 +2,7 @@
 
 xdata bool slp_flag;
 xdata bool wk_flag;
-char nodeid[5];
+volatile char nodeid[5];
 char nodepipe[5];
 char pipe_no[6]="0pipe";
 
@@ -20,14 +20,13 @@ void main()
 
 	print_details();
 
-	tx_payload[0] = 'R';
-	tx_payload[1] = 'G';
-	tx_payload[2] = 'S';
-	tx_payload[3] = 0;
-	RF_SendDat();
+	strcpy(tx_payload, "RGS");                                     /*tell gateway to register*/
+	RF_SendData();
 
+	RF_Recv_Flag = 0;                                             /*waiting gateway to response*/
 	while (RF_Recv_Flag != 1);
 	RF_Recv_Flag = 0;
+
 	strncpy(nodeid,rx_payload,3);
 	strncpy(nodepipe,rx_payload+4,1);
 	nodeid[3]='\0';
@@ -35,32 +34,61 @@ void main()
 	sprintf(pipe_no,"%spipe",nodepipe);
 
 	hal_nrf_set_address(HAL_NRF_TX, pipe_no);                       /* set TX address									*/
-	debugs("%s\r\n",rx_payload);
 
 	slp_flag = false;
 	wk_flag = false;
 
 	while(1)
 	{
-		if(slp_flag==true)
+		if(slp_flag==true)                                         /*to do sleep mode*/
 		{
-			sprintf(tx_payload,"L%sS",nodeid);
-			RF_SendDat();
-			nrf_sleep();
+			sprintf(tx_payload, "L%sS",nodeid);
+
+			RF_Recv_Flag = 0;
+			RF_SendData();
+			while (RF_Recv_Flag != 1);
+			RF_Recv_Flag = 0;
+			if(!strcmp(rx_payload,"Sleep")){                         
+				nrf_sleep();
+			}
+			else{
+				slp_flag = false;
+			}
 		}
-		if(wk_flag==true){
-			hal_nrf_set_address(HAL_NRF_PIPE0, pipe_no);                    /* set pipe0 address				  				  */  
+		else if(wk_flag==true){	                                     /*to do wakeup mode*/
+			hal_clk_set_16m_source(HAL_CLK_XOSC16M);   				/* Use external 16MHz crystal*/
+
+			while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M);
+			
+			hal_nrf_set_address(HAL_NRF_PIPE0, "gaway");                    /* set pipe0 address				  				  */  
+			hal_nrf_set_address(HAL_NRF_TX, "0pipe"); 						/* set TX address									*/
+			
+			RF_Recv_Flag = 0;
+			                      
+			strcpy(tx_payload, "RGS");
+			RF_SendData();
+
+			while (RF_Recv_Flag != 1);
+
+			RF_Recv_Flag = 0;
+			strncpy(nodeid,rx_payload,3);
+			strncpy(nodepipe,rx_payload+4,1);
+			nodeid[3]='\0';
+			nodepipe[1]='\0';
+			sprintf(pipe_no,"%spipe",nodepipe);
+
 			hal_nrf_set_address(HAL_NRF_TX, pipe_no);                       /* set TX address									*/
-			sprintf(tx_payload,"L%sW",nodeid);
-			RF_SendDat();
+			
 			wk_flag=false;
 		}
-		sprintf(tx_payload, "L%sA",nodeid);
-		RF_SendDat();
-		D2=0;
-		delay_ms(500);
-		D2=1;
-		delay_ms(500);
+		else {                                                         /*Alive mode*/
+			sprintf(tx_payload, "L%sA",nodeid);
+			RF_SendData();
+			D2=0;
+			delay_ms(500);
+			D2=1;
+			delay_ms(500);
+		}
 	}                                           
 } 
 
@@ -81,7 +109,7 @@ void rf_irq() interrupt INTERRUPT_RFIRQ
 		hal_nrf_flush_tx();
 	}
 		
-		if(irq_flags & (1<<HAL_NRF_RX_DR)) 							/* Rx interrupt 					*/
+	if(irq_flags & (1<<HAL_NRF_RX_DR)) 							/* Rx interrupt 					*/
 	{
 		while(!hal_nrf_rx_fifo_empty()) 							/* Read data 						*/
 		{
@@ -92,12 +120,12 @@ void rf_irq() interrupt INTERRUPT_RFIRQ
    	}
 }															
 
-void wuop_irq() interrupt INTERRUPT_WUOPIRQ
+void wuop_irq() interrupt INTERRUPT_WUOPIRQ                      /*to do switch*/
 {
 	slp_flag = !slp_flag;
 
 	if (!slp_flag) {
 		nrf_wakeup();
-		wk_flag=true;
+		wk_flag = true;
 	}
 }

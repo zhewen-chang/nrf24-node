@@ -87,7 +87,7 @@ void RfCofig(void)
 	hal_nrf_set_operation_mode(HAL_NRF_PTX);						/* Mode Rx 											*/
 	hal_nrf_set_rf_channel(RF_CHANNEL);		    		 			/* RF channel: 76, Tx and Rx must in same channel 	*/
 	hal_nrf_set_datarate(HAL_NRF_1MBPS);	  						/* RF Speed: 1MBPS 									*/
-	hal_nrf_set_output_power(HAL_NRF_0DBM);	  						/* Power: 0DBM 										*/
+	hal_nrf_set_output_power(HAL_NRF_18DBM);	  						/* Power: 0DBM 										*/
 	hal_nrf_set_crc_mode(HAL_NRF_CRC_16BIT);       					/* CRC Mode: 16bit, must same as Tx					*/
 	hal_nrf_set_rx_payload_width(HAL_NRF_PIPE0, RX_PAYLOAD_LEN); 	/* Set Rx length 									*/
 	hal_nrf_set_power_mode(HAL_NRF_PWR_UP);	    					/* Power up 										*/
@@ -102,9 +102,8 @@ void RfCofig(void)
 	CE_HIGH();  													/* Enable Rx 										*/
 }
 
-void RF_SendDat(void)
+void RF_SendData(void)
 {
-	
 	CE_LOW();
 	hal_nrf_set_operation_mode(HAL_NRF_PTX);   						/* Mode Tx 						*/
 	hal_nrf_write_tx_payload(tx_payload,TX_PAYLOAD_LEN); 
@@ -118,14 +117,14 @@ void RF_SendDat(void)
 	CE_HIGH();
 }
 
-void putstr(char *ch)
+void putstr(char *ch)                                              
 {
 	while (*ch != '\0') {
 		hal_uart_putchar((uint8_t) *ch++);
 	}
 }
-
-int32_t debugs(const char *fmt, ...)
+ /*print*/
+int32_t debugs(const char *fmt, ...)                             
 {
 	int32_t printed;
 	char printf_buf[300];
@@ -224,7 +223,7 @@ void print_details(void)
 {
 	const char data_rate[][8] = {"1Mbps", "2Mbps", "250Kbps"};
 	const char crc_len[][8] = {"OFF", "8BIT", "16BIT"};
-	const char pa_power[][8] = {"PA_OFF", "PA_LOW", "PA_HIGH", "PA_MAX"};
+	const char pa_power[][8] = {"PA_MIN", "PA_LOW", "PA_HIGH", "PA_MAX"};
 
 	debugs("\r\n================ NRF Configuration ===============\r\n");
 	print_status();
